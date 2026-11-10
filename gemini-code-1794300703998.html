@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日一句肯定自己 | 水彩文青舒壓夥伴</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Noto Serif TC & Zen Maru Gothic -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti for Celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        watercolor: {
+                            pink: '#F9EAE1',
+                            rose: '#E8B4B8',
+                            blue: '#E0F4F7',
+                            sky: '#A9D6E5',
+                            green: '#E2ECE9',
+                            sage: '#8DA99D',
+                            yellow: '#FFF3CD',
+                            cream: '#FCF9F2',
+                            ink: '#3D4A41',
+                            purple: '#EBD9E9'
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['"Noto Serif TC"', 'serif'],
+                        rounded: ['"Zen Maru Gothic"', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 25px -5px rgba(141, 169, 157, 0.15), 0 8px 10px -6px rgba(141, 169, 157, 0.1)',
+                        'inner-watercolor': 'inset 0 2px 8px 0 rgba(232, 180, 184, 0.25)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background: linear-gradient(135deg, #FCF9F2 0%, #F9EAE1 40%, #E0F4F7 100%);
+            background-attachment: fixed;
+            color: #3D4A41;
+        }
+
+        .watercolor-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(232, 180, 184, 0.3);
+            border-radius: 24px;
+            box-shadow: 0 12px 32px 0 rgba(141, 169, 157, 0.12);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .watercolor-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(232,180,184,0.1) 0%, rgba(169,214,229,0.1) 50%, transparent 70%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Card Flip Effect */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
+        /* Breathing Animation */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(1deg); }
+        }
+        .animate-float {
+            animation: floatSlow 5s ease-in-out infinite;
+        }
+
+        @keyframes pulseSoft {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.05); opacity: 1; }
+        }
+        .animate-pulse-soft {
+            animation: pulseSoft 3s ease-in-out infinite;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(249, 234, 225, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(141, 169, 157, 0.4);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(141, 169, 157, 0.7);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-watercolor-rose selection:text-white relative">
+
+    <!-- Background Decorative Watercolor Blobs -->
+    <div class="fixed top-10 left-10 w-72 h-72 bg-watercolor-rose/20 rounded-full blur-3xl pointer-events-none animate-float"></div>
+    <div class="fixed bottom-10 right-10 w-96 h-96 bg-watercolor-sky/20 rounded-full blur-3xl pointer-events-none animate-float" style="animation-delay: -2.5s;"></div>
+    <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-watercolor-yellow/20 rounded-full blur-3xl pointer-events-none"></div>
+
+    <!-- Header Navigation -->
+    <header class="relative z-10 w-full max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('draw')">
+            <div class="w-10 h-10 rounded-full bg-watercolor-rose/30 flex items-center justify-center text-watercolor-ink shadow-inner">
+                <i class="fa-solid font-serif text-xl text-pink-600">✿</i>
+            </div>
+            <div>
+                <h1 class="font-serif font-bold text-lg md:text-xl text-watercolor-ink tracking-wider">每日一句肯定自己</h1>
+                <p class="text-xs text-watercolor-sage tracking-widest">心靈水彩陪伴日誌</p>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs & User Profile -->
+        <div class="flex items-center gap-2 md:gap-4">
+            <nav id="nav-menu" class="hidden md:flex items-center gap-1 bg-white/60 p-1.5 rounded-full border border-watercolor-rose/20 shadow-sm text-sm">
+                <button onclick="switchTab('draw')" id="nav-draw" class="px-4 py-1.5 rounded-full transition-all duration-300 font-medium text-watercolor-ink bg-watercolor-rose/30">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-1.5 text-rose-400"></i>抽取肯定
+                </button>
+                <button onclick="switchTab('journal')" id="nav-journal" class="px-4 py-1.5 rounded-full transition-all duration-300 font-medium text-gray-500 hover:text-watercolor-ink">
+                    <i class="fa-solid fa-book-open-reader mr-1.5 text-teal-500"></i>心靈日誌
+                </button>
+                <button onclick="switchTab('pet')" id="nav-pet" class="px-4 py-1.5 rounded-full transition-all duration-300 font-medium text-gray-500 hover:text-watercolor-ink">
+                    <i class="fa-solid fa-heart-pulse mr-1.5 text-pink-500"></i>愛心寶寶
+                </button>
+                <button onclick="switchTab('settings')" id="nav-settings" class="px-4 py-1.5 rounded-full transition-all duration-300 font-medium text-gray-500 hover:text-watercolor-ink">
+                    <i class="fa-solid fa-sliders mr-1.5 text-amber-500"></i>系統設定
+                </button>
+            </nav>
+
+            <!-- User Status / Auth Button -->
+            <div id="user-status-area">
+                <button onclick="openAuthModal()" class="px-4 py-2 bg-watercolor-rose text-white text-sm font-medium rounded-full hover:bg-rose-400 transition-all shadow-md flex items-center gap-2">
+                    <i class="fa-brands fa-google"></i>
+                    <span>登入 / 註冊</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile Navigation Bar (Bottom) -->
+    <div id="mobile-nav" class="md:hidden fixed bottom-4 left-4 right-4 z-40 bg-white/90 backdrop-blur-md border border-watercolor-rose/30 rounded-2xl shadow-lg p-2 flex justify-around">
+        <button onclick="switchTab('draw')" id="m-nav-draw" class="flex flex-col items-center p-2 text-rose-500">
+            <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
+            <span class="text-xs mt-1">抽取</span>
+        </button>
+        <button onclick="switchTab('journal')" id="m-nav-journal" class="flex flex-col items-center p-2 text-gray-400">
+            <i class="fa-solid fa-book-open-reader text-lg"></i>
+            <span class="text-xs mt-1">日誌</span>
+        </button>
+        <button onclick="switchTab('pet')" id="m-nav-pet" class="flex flex-col items-center p-2 text-gray-400">
+            <i class="fa-solid fa-heart-pulse text-lg"></i>
+            <span class="text-xs mt-1">寶寶</span>
+        </button>
+        <button onclick="switchTab('settings')" id="m-nav-settings" class="flex flex-col items-center p-2 text-gray-400">
+            <i class="fa-solid fa-sliders text-lg"></i>
+            <span class="text-xs mt-1">設定</span>
+        </button>
+    </div>
+
+    <!-- Main Content Container -->
+    <main class="relative z-10 max-w-4xl mx-auto w-full px-4 py-6 flex-grow">
+
+        <!-- Banner Alert when Not Logged In -->
+        <div id="login-banner" class="mb-6 p-4 bg-watercolor-yellow/60 border border-amber-200/60 rounded-2xl flex items-center justify-between text-watercolor-ink shadow-sm">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-sparkles text-amber-500 text-xl"></i>
+                <p class="text-sm">歡迎來到心靈水彩空間。目前為<strong>訪客體驗模式</strong>，登入後即可記錄您的專屬訓練家日誌與愛心寶寶值！</p>
+            </div>
+            <button onclick="openAuthModal()" class="text-xs bg-amber-500 text-white px-3 py-1.5 rounded-full font-medium hover:bg-amber-600 transition shadow-sm whitespace-nowrap">即刻登入</button>
+        </div>
+
+        <!-- ================= PAGE 1: DRAW AFFIRMATION CARD ================= -->
+        <section id="page-draw" class="space-y-6">
+            <!-- Header Tip -->
+            <div class="text-center space-y-2">
+                <span class="text-xs font-semibold px-3 py-1 rounded-full bg-watercolor-rose/30 text-rose-700 tracking-wider">今日肯定旅程</span>
+                <h2 class="font-serif text-2xl md:text-3xl font-bold text-watercolor-ink">深呼吸，抽一張屬於今天的溫柔力量</h2>
+                <p class="text-sm text-watercolor-sage max-w-md mx-auto">點擊卡片翻牌，閱讀給自己的心靈語錄，並為這句話給予你的共鳴評分。</p>
+            </div>
+
+            <!-- Card Flip Area -->
+            <div class="perspective-1000 w-full max-w-md mx-auto h-[380px] cursor-pointer" onclick="handleCardClick()">
+                <div id="card-inner" class="transform-style-3d relative w-full h-full duration-700">
+                    
+                    <!-- Card Front (Unrevealed) -->
+                    <div class="backface-hidden absolute inset-0 watercolor-card flex flex-col items-center justify-center p-8 text-center border-2 border-watercolor-rose/40 shadow-soft animate-float">
+                        <div class="w-24 h-24 rounded-full bg-watercolor-pink/50 flex items-center justify-center mb-6 shadow-inner">
+                            <i class="fa-solid fa-feather-pointed text-4xl text-rose-400"></i>
+                        </div>
+                        <h3 class="font-serif font-bold text-xl text-watercolor-ink mb-2">點擊抽牌</h3>
+                        <p class="text-xs text-watercolor-sage">願這句話能如水彩般溫柔滋潤你的心靈</p>
+                        <div class="mt-8 text-xs text-rose-400 animate-pulse-soft">
+                            <i class="fa-solid fa-hand-pointer mr-1"></i> 點擊揭開今日能量
+                        </div>
+                    </div>
+
+                    <!-- Card Back (Revealed) -->
+                    <div class="rotate-y-180 backface-hidden absolute inset-0 watercolor-card flex flex-col justify-between p-6 md:p-8 bg-gradient-to-br from-white/90 via-watercolor-cream to-watercolor-pink/30 border-2 border-watercolor-sage/30 shadow-soft">
+                        <div class="flex items-center justify-between border-b border-watercolor-sage/20 pb-3">
+                            <span id="card-category" class="text-xs px-3 py-1 rounded-full bg-watercolor-sky/40 text-teal-800 font-medium">心靈安撫</span>
+                            <span id="card-date" class="text-xs text-watercolor-sage font-serif">2026-11-10</span>
+                        </div>
+
+                        <div class="my-auto py-4 text-center">
+                            <p id="card-content" class="font-serif text-lg md:text-xl font-bold leading-relaxed text-watercolor-ink">
+                                「你不需要隨時保持完美，光是接納現在的自己，就已經是一種了不起的勇氣。」
+                            </p>
+                        </div>
+
+                        <!-- Rating & Interaction (5 Hearts - Fixed Single Heart per Rating Button) -->
+                        <div class="space-y-3 pt-3 border-t border-watercolor-sage/20" onclick="event.stopPropagation()">
+                            <p class="text-xs text-center text-watercolor-sage">這句話給了你多少溫暖？(點擊評分)</p>
+                            <div class="flex justify-center gap-3 text-2xl text-rose-300" id="heart-rating">
+                                <button onclick="rateCard(1)" class="hover:scale-125 transition p-1"><i class="fa-heart fa-regular"></i></button>
+                                <button onclick="rateCard(2)" class="hover:scale-125 transition p-1"><i class="fa-heart fa-regular"></i></button>
+                                <button onclick="rateCard(3)" class="hover:scale-125 transition p-1"><i class="fa-heart fa-regular"></i></button>
+                                <button onclick="rateCard(4)" class="hover:scale-125 transition p-1"><i class="fa-heart fa-regular"></i></button>
+                                <button onclick="rateCard(5)" class="hover:scale-125 transition p-1"><i class="fa-heart fa-regular"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap justify-center gap-4 pt-4">
+                <button onclick="drawNewCard()" class="px-6 py-2.5 rounded-full bg-watercolor-sage text-white text-sm font-medium hover:bg-teal-700 transition shadow-md flex items-center gap-2">
+                    <i class="fa-solid fa-rotate-right"></i> 重新抽取肯定句
+                </button>
+                <button onclick="switchTab('journal')" class="px-6 py-2.5 rounded-full bg-white text-watercolor-ink border border-watercolor-rose/40 text-sm font-medium hover:bg-watercolor-pink/40 transition shadow-sm flex items-center gap-2">
+                    <i class="fa-solid fa-pen-nib text-rose-400"></i> 將此感受寫入日誌
+                </button>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 2: TRAINER JOURNAL ================= -->
+        <section id="page-journal" class="hidden space-y-6">
+            <div class="text-center space-y-2">
+                <span class="text-xs font-semibold px-3 py-1 rounded-full bg-watercolor-sky/40 text-teal-800 tracking-wider">訓練家日誌</span>
+                <h2 class="font-serif text-2xl font-bold text-watercolor-ink">傾聽心聲，寫下今日的心靈對話</h2>
+                <p class="text-sm text-watercolor-sage">每一筆記錄，都是陪伴愛心寶寶成長的養分 (+10 經驗值)。</p>
+            </div>
+
+            <!-- New Log Form -->
+            <div class="watercolor-card p-6 border-watercolor-sky/30">
+                <h3 class="font-serif font-bold text-base text-watercolor-ink mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-book-bookmark text-teal-500"></i> 新增日誌心情
+                </h3>
+                <textarea id="journal-input" rows="3" placeholder="今天過得如何？寫下一兩句想鼓勵自己或抒發的話吧..." class="w-full p-4 rounded-xl border border-watercolor-sage/30 bg-white/70 text-sm focus:outline-none focus:ring-2 focus:ring-watercolor-sage/50 placeholder-gray-400 resize-none"></textarea>
+                <div class="flex justify-between items-center mt-3">
+                    <span id="journal-word-count" class="text-xs text-watercolor-sage">0 字</span>
+                    <button onclick="saveJournalLog()" class="px-5 py-2 bg-watercolor-sage text-white text-sm font-medium rounded-full hover:bg-teal-700 transition shadow-md flex items-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i> 儲存日誌 (+10 EXP)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Log History List -->
+            <div class="space-y-3">
+                <h3 class="font-serif font-bold text-sm text-watercolor-ink flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-watercolor-sage"></i> 過去的心靈軌跡
+                </h3>
+                <div id="journal-list" class="space-y-3">
+                    <!-- Dynamic Journal Items Inserted Here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 3: HEART BABY (PET) ================= -->
+        <section id="page-pet" class="hidden space-y-6 text-center">
+            <div class="space-y-2">
+                <span class="text-xs font-semibold px-3 py-1 rounded-full bg-watercolor-pink text-pink-700 tracking-wider">靈魂伴侶</span>
+                <h2 class="font-serif text-2xl font-bold text-watercolor-ink">愛心寶寶狀態與訓練家等級</h2>
+                <p class="text-sm text-watercolor-sage">透過抽牌與日誌給予愛心寶寶養分，觀察牠的成長吧！</p>
+            </div>
+
+            <div class="watercolor-card p-8 max-w-lg mx-auto space-y-6">
+                <!-- Avatar Dynamic SVG Display -->
+                <div class="relative w-44 h-44 mx-auto flex items-center justify-center">
+                    <div class="absolute inset-0 bg-gradient-to-tr from-watercolor-pink to-watercolor-sky rounded-full blur-xl opacity-70 animate-pulse-soft"></div>
+                    
+                    <!-- Heart Baby SVG Art -->
+                    <div id="pet-avatar-container" class="relative z-10 w-36 h-36 bg-white/80 rounded-full flex items-center justify-center shadow-inner border-2 border-watercolor-rose/30 animate-float">
+                        <svg id="pet-svg" class="w-24 h-24 transition-all duration-500" viewBox="0 0 100 100">
+                            <!-- SVG Body (Heart Shaped Cloud) -->
+                            <path d="M 50 85 C 20 60 5 40 15 25 C 25 10 40 15 50 30 C 60 15 75 10 85 25 C 95 40 80 60 50 85 Z" fill="#E8B4B8" opacity="0.85"/>
+                            <!-- Eyes -->
+                            <circle cx="38" cy="40" r="3" fill="#3D4A41"/>
+                            <circle cx="62" cy="40" r="3" fill="#3D4A41"/>
+                            <!-- Blush -->
+                            <ellipse cx="32" cy="47" rx="4" ry="2" fill="#F08080" opacity="0.6"/>
+                            <ellipse cx="68" cy="47" rx="4" ry="2" fill="#F08080" opacity="0.6"/>
+                            <!-- Cute Smile -->
+                            <path d="M 44 48 Q 50 53 56 48" stroke="#3D4A41" stroke-width="2" fill="none" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Trainer Info & Stats -->
+                <div class="space-y-4">
+                    <div>
+                        <h3 id="pet-trainer-name" class="font-serif font-bold text-xl text-watercolor-ink">訓練家: 訪客水彩夥伴</h3>
+                        <p id="pet-level-title" class="text-xs text-rose-500 font-medium">Lv.1 初心陪伴者</p>
+                    </div>
+
+                    <!-- Progress Bar 1: Experience -->
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs font-medium text-watercolor-ink">
+                            <span><i class="fa-solid fa-star text-amber-400 mr-1"></i>訓練家經驗值 (EXP)</span>
+                            <span id="exp-text">40 / 100</span>
+                        </div>
+                        <div class="w-full h-3 bg-gray-200/60 rounded-full overflow-hidden p-0.5">
+                            <div id="exp-bar" class="h-full bg-gradient-to-r from-amber-300 to-amber-400 rounded-full transition-all duration-500" style="width: 40%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar 2: Heart Baby Value -->
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs font-medium text-watercolor-ink">
+                            <span><i class="fa-solid fa-heart text-rose-400 mr-1"></i>愛心寶寶親密度</span>
+                            <span id="pet-val-text">65 / 100</span>
+                        </div>
+                        <div class="w-full h-3 bg-gray-200/60 rounded-full overflow-hidden p-0.5">
+                            <div id="pet-val-bar" class="h-full bg-gradient-to-r from-rose-300 to-rose-500 rounded-full transition-all duration-500" style="width: 65%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pet Interaction Button -->
+                <div class="pt-2">
+                    <button onclick="interactWithPet()" class="px-6 py-2.5 rounded-full bg-watercolor-rose text-white text-sm font-medium hover:bg-rose-400 transition shadow-md flex items-center justify-center gap-2 mx-auto">
+                        <i class="fa-solid fa-hand-holding-heart"></i> 摸摸愛心寶寶 (+5 親密度)
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 4: SETTINGS & GAS CODE ================= -->
+        <section id="page-settings" class="hidden space-y-6">
+            <div class="text-center space-y-2">
+                <span class="text-xs font-semibold px-3 py-1 rounded-full bg-watercolor-purple text-purple-700 tracking-wider">系統維護與串接</span>
+                <h2 class="font-serif text-2xl font-bold text-watercolor-ink">Google Sheets API 串接與後端代碼</h2>
+                <p class="text-sm text-watercolor-sage max-w-lg mx-auto">本專案完全採用無伺服器架構，透過 Google Apps Script 連接您的 4 個工作表。</p>
+            </div>
+
+            <!-- Apps Script URL Configuration Card -->
+            <div class="watercolor-card p-6 border-purple-200">
+                <h3 class="font-serif font-bold text-base text-watercolor-ink mb-2 flex items-center gap-2">
+                    <i class="fa-solid fa-link text-purple-500"></i> Apps Script Web App URL 設定
+                </h3>
+                <p class="text-xs text-watercolor-sage mb-4">貼上您在 Google Apps Script 發布的 Web App 網址以進行雙向串接：</p>
+                <div class="flex gap-2">
+                    <input type="text" id="gas-url-input" placeholder="https://script.google.com/macros/s/AKfycb.../exec" class="flex-grow p-3 rounded-xl border border-watercolor-sage/30 bg-white/80 text-xs focus:outline-none focus:ring-2 focus:ring-purple-300">
+                    <button onclick="saveGasUrl()" class="px-5 py-2.5 bg-purple-500 text-white text-xs font-medium rounded-xl hover:bg-purple-600 transition shadow-md">儲存網址</button>
+                </div>
+                <div class="mt-3 flex items-center gap-2 text-xs text-gray-500">
+                    <span id="gas-status-indicator" class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                    <span id="gas-status-text">目前運作狀態：本地展示模式 (Demo Mode)</span>
+                </div>
+            </div>
+
+            <!-- GAS Code Viewer & Instructions -->
+            <div class="watercolor-card p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-serif font-bold text-base text-watercolor-ink flex items-center gap-2">
+                        <i class="fa-solid fa-code text-watercolor-sage"></i> Google Apps Script (Code.gs) 原始碼
+                    </h3>
+                    <button onclick="copyGasCode()" class="text-xs px-3 py-1.5 bg-watercolor-sage text-white rounded-lg hover:bg-teal-700 transition">
+                        <i class="fa-regular fa-copy mr-1"></i>複製 Code.gs 程式碼
+                    </button>
+                </div>
+
+                <p class="text-xs text-watercolor-sage">請將下方完整代碼貼入 Apps Script 編輯器中，並設定試算表 ID。試算表需包含 4 個工作表：<br>
+                    <code class="bg-white/80 px-1 py-0.5 rounded text-rose-500">E訓練家名單</code>, 
+                    <code class="bg-white/80 px-1 py-0.5 rounded text-rose-500">訓練家日誌</code>, 
+                    <code class="bg-white/80 px-1 py-0.5 rounded text-rose-500">E肯定句</code>, 
+                    <code class="bg-white/80 px-1 py-0.5 rounded text-rose-500">R訓練家之肯定句</code>
+                </p>
+
+                <textarea id="gas-code-display" readonly rows="12" class="w-full p-4 rounded-xl border border-gray-200 bg-gray-900 text-emerald-400 font-mono text-xs focus:outline-none leading-relaxed select-all"></textarea>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal: Google / FB Login Selection -->
+    <div id="auth-modal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+        <div class="watercolor-card max-w-sm w-full p-6 text-center space-y-5 bg-white transform scale-95 transition-transform duration-300 shadow-2xl">
+            <div class="w-14 h-14 rounded-full bg-watercolor-rose/30 flex items-center justify-center mx-auto text-rose-500">
+                <i class="fa-solid fa-user-astronaut text-2xl"></i>
+            </div>
+            <div>
+                <h3 class="font-serif font-bold text-xl text-watercolor-ink">登入訓練家帳號</h3>
+                <p class="text-xs text-watercolor-sage mt-1">選擇您的社群帳號登入以儲存專屬紀錄</p>
+            </div>
+
+            <div class="space-y-3 pt-2">
+                <button onclick="simulateLogin('Google', 'user.watercolor@gmail.com', '水彩旅人')" class="w-full py-3 px-4 bg-white border border-gray-300 rounded-xl font-medium text-gray-700 text-sm hover:bg-gray-50 transition shadow-sm flex items-center justify-center gap-3">
+                    <i class="fa-brands fa-google text-red-500 text-base"></i>
+                    <span>使用 Google 帳號登入</span>
+                </button>
+                <button onclick="simulateLogin('Facebook', 'fb.user@example.com', '晴空訓練家')" class="w-full py-3 px-4 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 transition shadow-sm flex items-center justify-center gap-3">
+                    <i class="fa-brands fa-facebook-f text-base"></i>
+                    <span>使用 Facebook 帳號登入</span>
+                </button>
+            </div>
+
+            <p class="text-[10px] text-watercolor-sage">登入即表示您同意建立「E訓練家名單」資料檔案。</p>
+            
+            <button onclick="closeAuthModal()" class="text-xs text-gray-400 hover:text-gray-600 underline pt-2">暫時以訪客身份繼續</button>
+        </div>
+    </div>
+
+    <!-- Global Toast Notification Message Box -->
+    <div id="toast-message" class="fixed bottom-20 md:bottom-8 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-full bg-watercolor-ink text-white text-xs shadow-xl opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-2">
+        <i class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toast-text">訊息內容</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="relative z-10 py-4 text-center text-xs text-watercolor-sage border-t border-watercolor-rose/20 bg-white/40">
+        <p>© 2026 每日一句肯定自己 · 舒壓輕緩水彩空間</p>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // ================= STATE MANAGEMENT =================
+        const state = {
+            user: null, // { nameId, name, email, exp, petVal }
+            currentCard: null,
+            journals: [
+                { id: 'LOG_1', date: '2026-11-10 14:30', content: '今天在工作之餘抽空喝了一杯熱茶，感覺心境漸漸平靜下來。' },
+                { id: 'LOG_2', date: '2026-11-09 20:15', content: '雖然事情有點多，但我允許自己照自己的步調完成。' }
+            ],
+            affirmations: [
+                { id: 'POS_1', category: '自我接納', content: '「你不需要隨時保持完美，光是接納現在的自己，就已經是一種了不起的勇氣。」' },
+                { id: 'POS_2', category: '情緒安撫', content: '「允許情緒如雲朵般浮現並流走，你比想像中更有力量承接自己。」' },
+                { id: 'POS_3', category: '信心建立', content: '「相信每一個微小的努力，都在為未來的花開積蓄養分。」' },
+                { id: 'POS_4', category: '日常放鬆', content: '「放慢腳步並不是停滯不前，而是為了看清路上的美麗風景。」' },
+                { id: 'POS_5', category: '愛與溫柔', content: '「對待自己像對待最摯愛的朋友一樣，給予無限的溫柔與體諒。」' }
+            ],
+            gasUrl: localStorage.getItem('gas_app_url') || '',
+            isCardFlipped: false
+        };
+
+        // ================= GOOGLE APPS SCRIPT (CODE.GS) SOURCE CODE =================
+        const GAS_CODE_STRING = `// ========================================================
+// 每日一句肯定自己 - Google Apps Script (Code.gs) 後端 API
+// ========================================================
+// 請填入您的 Google Sheet 試算表 ID (從網址列取得)
+const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE';
+
+function getDb() {
+  return SpreadsheetApp.openById(SPREADSHEET_ID);
+}
+
+// 處理 HTTP GET 請求
+function doGet(e) {
+  const action = e.parameter.action;
+  let result = { status: 'error', message: '無效的操作' };
+
+  try {
+    if (action === 'getUser') {
+      result = getUser(e.parameter.email);
+    } else if (action === 'getRandomPositivity') {
+      result = getRandomPositivity();
+    } else if (action === 'getJournals') {
+      result = getJournals(e.parameter.nameId);
+    }
+  } catch (err) {
+    result = { status: 'error', message: err.toString() };
+  }
+
+  return ContentService.createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// 處理 HTTP POST 請求 (CORS 友善)
+function doPost(e) {
+  let result = { status: 'error', message: '無效的操作' };
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const action = data.action;
+
+    if (action === 'loginOrRegister') {
+      result = loginOrRegister(data.name, data.email);
+    } else if (action === 'addJournal') {
+      result = addJournal(data.nameId, data.content);
+    } else if (action === 'ratePositivity') {
+      result = ratePositivity(data.nameId, data.posId, data.rating);
+    } else if (action === 'updatePet') {
+      result = updatePet(data.nameId, data.exp, data.petVal);
+    }
+  } catch (err) {
+    result = { status: 'error', message: err.toString() };
+  }
+
+  return ContentService.createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// 1. 訓練家登入與自動註冊 (E訓練家名單)
+function loginOrRegister(name, email) {
+  const sheet = getDb().getSheetByName('E訓練家名單');
+  const data = sheet.getDataRange().getValues();
+  
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][2] === email) { // google帳戶匹配
+      return {
+        status: 'success',
+        user: {
+          nameId: data[i][0],
+          name: data[i][1],
+          email: data[i][2],
+          exp: data[i][3],
+          petVal: data[i][4]
+        }
+      };
+    }
+  }
+
+  // 查無則新增
+  const newNameId = 'USR_' + new Date().getTime();
+  const newUser = [newNameId, name, email, 0, 50]; // 初始 EXP 0, 愛心寶寶值 50
+  sheet.appendRow(newUser);
+  
+  return {
+    status: 'success',
+    user: { nameId: newNameId, name: name, email: email, exp: 0, petVal: 50 }
+  };
+}
+
+// 2. 獲取隨機肯定句 (E肯定句)
+function getRandomPositivity() {
+  const sheet = getDb().getSheetByName('E肯定句');
+  const data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return { status: 'error', message: '無資料' };
+
+  const randomIndex = Math.floor(Math.random() * (data.length - 1)) + 1;
+  const row = data[randomIndex];
+  
+  // 增加抽取次數
+  sheet.getRange(randomIndex + 1, 4).setValue((row[3] || 0) + 1);
+
+  return {
+    status: 'success',
+    positivity: { posId: row[0], category: row[1], content: row[2], count: row[3] + 1, score: row[4] }
+  };
+}
+
+// 3. 新增訓練家日誌 (訓練家日誌 & 經驗值)
+function addJournal(nameId, content) {
+  const logSheet = getDb().getSheetByName('訓練家日誌');
+  const logId = 'LOG_' + new Date().getTime();
+  const dateStr = Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd HH:mm");
+  
+  logSheet.appendRow([logId, nameId, dateStr, content]);
+  updateUserStats(nameId, 10, 5);
+
+  return { status: 'success', logId: logId, date: dateStr };
+}
+
+// 4. 記錄評分 (R訓練家之肯定句)
+function ratePositivity(nameId, posId, rating) {
+  const rateSheet = getDb().getSheetByName('R訓練家之肯定句');
+  const dateStr = Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd");
+  rateSheet.appendRow([nameId, posId, dateStr, rating]);
+  updateUserStats(nameId, 5, 2);
+
+  return { status: 'success' };
+}
+
+// 5. 取得特定訓練家日誌
+function getJournals(nameId) {
+  const sheet = getDb().getSheetByName('訓練家日誌');
+  const data = sheet.getDataRange().getValues();
+  const list = [];
+  
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][1] === nameId) {
+      list.push({ logId: data[i][0], nameId: data[i][1], date: data[i][2], content: data[i][3] });
+    }
+  }
+  return { status: 'success', journals: list.reverse() };
+}
+
+// 輔助函式：更新用戶數值
+function updateUserStats(nameId, addExp, addPetVal) {
+  const sheet = getDb().getSheetByName('E訓練家名單');
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][0] === nameId) {
+      const currentExp = data[i][3] || 0;
+      const currentPet = data[i][4] || 50;
+      sheet.getRange(i + 1, 4).setValue(currentExp + addExp);
+      sheet.getRange(i + 1, 5).setValue(Math.min(100, currentPet + addPetVal));
+      break;
+    }
+  }
+}`;
+
+        // ================= INITIALIZATION =================
+        window.onload = function() {
+            document.getElementById('gas-code-display').value = GAS_CODE_STRING;
+            if (state.gasUrl) {
+                document.getElementById('gas-url-input').value = state.gasUrl;
+                updateGasStatusIndicator(true);
+            }
+            renderJournals();
+            prepareRandomCard();
+        };
+
+        // ================= UI TAB SWITCHING =================
+        function switchTab(tabName) {
+            const tabs = ['draw', 'journal', 'pet', 'settings'];
+            tabs.forEach(t => {
+                document.getElementById(`page-${t}`).classList.add('hidden');
+                
+                const navBtn = document.getElementById(`nav-${t}`);
+                if (navBtn) {
+                    if (t === tabName) {
+                        navBtn.className = "px-4 py-1.5 rounded-full transition-all duration-300 font-medium text-watercolor-ink bg-watercolor-rose/30 shadow-sm";
+                    } else {
+                        navBtn.className = "px-4 py-1.5 rounded-full transition-all duration-300 font-medium text-gray-500 hover:text-watercolor-ink";
+                    }
+                }
+
+                const mNavBtn = document.getElementById(`m-nav-${t}`);
+                if (mNavBtn) {
+                    if (t === tabName) {
+                        mNavBtn.className = "flex flex-col items-center p-2 text-rose-500";
+                    } else {
+                        mNavBtn.className = "flex flex-col items-center p-2 text-gray-400";
+                    }
+                }
+            });
+
+            document.getElementById(`page-${tabName}`).classList.remove('hidden');
+        }
+
+        // ================= CARD DRAWING & FLIP LOGIC =================
+        function handleCardClick() {
+            const cardInner = document.getElementById('card-inner');
+            if (!state.isCardFlipped) {
+                cardInner.classList.add('rotate-y-180');
+                state.isCardFlipped = true;
+                confetti({ particleCount: 30, spread: 60, origin: { y: 0.6 } });
+                
+                if (state.user) {
+                    addExpAndPetVal(2, 1);
+                }
+            }
+        }
+
+        function drawNewCard() {
+            const cardInner = document.getElementById('card-inner');
+            cardInner.classList.remove('rotate-y-180');
+            state.isCardFlipped = false;
+
+            setTimeout(() => {
+                prepareRandomCard();
+                showToast("已為您抽換全新的心靈肯定句 ✿");
+            }, 400);
+        }
+
+        function prepareRandomCard() {
+            const random = state.affirmations[Math.floor(Math.random() * state.affirmations.length)];
+            state.currentCard = random;
+
+            document.getElementById('card-category').innerText = random.category;
+            document.getElementById('card-content').innerText = random.content;
+            document.getElementById('card-date').innerText = new Date().toISOString().split('T')[0];
+
+            // Reset Hearts (Single Heart per button)
+            const hearts = document.getElementById('heart-rating').children;
+            for (let h of hearts) {
+                const icon = h.querySelector('i');
+                icon.className = "fa-heart fa-regular text-rose-300";
+            }
+        }
+
+        function rateCard(rating) {
+            const hearts = document.getElementById('heart-rating').children;
+            for (let i = 0; i < 5; i++) {
+                const icon = hearts[i].querySelector('i');
+                if (i < rating) {
+                    icon.className = "fa-heart fa-solid text-rose-500 scale-110";
+                } else {
+                    icon.className = "fa-heart fa-regular text-rose-300";
+                }
+            }
+
+            showToast(`感謝給予 ${rating} 顆愛心溫暖評分！`);
+            addExpAndPetVal(5, 2);
+
+            if (state.gasUrl && state.user) {
+                fetch(state.gasUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'ratePositivity',
+                        nameId: state.user.nameId,
+                        posId: state.currentCard.id,
+                        rating: rating
+                    })
+                });
+            }
+        }
+
+        // ================= JOURNAL LOGIC =================
+        function saveJournalLog() {
+            const input = document.getElementById('journal-input');
+            const text = input.value.trim();
+            if (!text) {
+                showToast("請輸入欲記錄的心意再儲存喔！");
+                return;
+            }
+
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+            const newLog = {
+                id: 'LOG_' + Date.now(),
+                date: dateStr,
+                content: text
+            };
+
+            state.journals.unshift(newLog);
+            renderJournals();
+            input.value = '';
+
+            addExpAndPetVal(10, 5);
+            showToast("日誌儲存成功！訓練家 EXP +10 ✿");
+            confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 } });
+
+            if (state.gasUrl && state.user) {
+                fetch(state.gasUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'addJournal',
+                        nameId: state.user.nameId,
+                        content: text
+                    })
+                });
+            }
+        }
+
+        function renderJournals() {
+            const container = document.getElementById('journal-list');
+            if (state.journals.length === 0) {
+                container.innerHTML = `<p class="text-xs text-center text-watercolor-sage py-6">目前還沒有紀錄，寫下第一筆心靈日記吧！</p>`;
+                return;
+            }
+
+            container.innerHTML = state.journals.map(j => `
+                <div class="p-4 rounded-xl bg-white/80 border border-watercolor-rose/20 shadow-sm space-y-2">
+                    <div class="flex items-center justify-between text-xs text-watercolor-sage">
+                        <span><i class="fa-regular fa-calendar-check mr-1 text-teal-500"></i>${j.date}</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-watercolor-pink/50 text-rose-600">靈魂筆記</span>
+                    </div>
+                    <p class="text-sm text-watercolor-ink leading-relaxed font-serif">${escapeHtml(j.content)}</p>
+                </div>
+            `).join('');
+        }
+
+        // ================= HEART BABY & USER STATS =================
+        function interactWithPet() {
+            addExpAndPetVal(2, 5);
+            
+            const avatar = document.getElementById('pet-avatar-container');
+            avatar.classList.add('scale-110');
+            setTimeout(() => avatar.classList.remove('scale-110'), 300);
+
+            showToast("摸摸愛心寶寶，親密度 +5 ❤️");
+            confetti({ particleCount: 20, scalar: 0.8, origin: { y: 0.5 } });
+        }
+
+        function addExpAndPetVal(expAdd, petValAdd) {
+            if (!state.user) {
+                state.user = { nameId: 'USR_DEMO', name: '訪客水彩夥伴', email: 'guest@example.com', exp: 35, petVal: 60 };
+            }
+
+            state.user.exp += expAdd;
+            state.user.petVal = Math.min(100, state.user.petVal + petValAdd);
+
+            updatePetUI();
+        }
+
+        function updatePetUI() {
+            if (!state.user) return;
+
+            const exp = state.user.exp;
+            const petVal = state.user.petVal;
+
+            document.getElementById('pet-trainer-name').innerText = `訓練家: ${state.user.name}`;
+            
+            const level = Math.floor(exp / 50) + 1;
+            document.getElementById('pet-level-title').innerText = `Lv.${level} 水彩守護者 (${level > 3 ? '高階陪伴' : '初心陪伴'})`;
+
+            const expPercentage = (exp % 50) * 2;
+            document.getElementById('exp-text').innerText = `${exp} EXP`;
+            document.getElementById('exp-bar').style.width = `${Math.min(100, expPercentage)}%`;
+
+            document.getElementById('pet-val-text').innerText = `${petVal} / 100`;
+            document.getElementById('pet-val-bar').style.width = `${petVal}%`;
+
+            const svg = document.getElementById('pet-svg');
+            if (petVal > 80) {
+                svg.style.transform = "scale(1.1)";
+            } else {
+                svg.style.transform = "scale(1)";
+            }
+        }
+
+        // ================= AUTHENTICATION MODAL LOGIC =================
+        function openAuthModal() {
+            const modal = document.getElementById('auth-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.children[0].classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeAuthModal() {
+            const modal = document.getElementById('auth-modal');
+            modal.classList.add('opacity-0');
+            modal.children[0].classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function simulateLogin(provider, email, defaultName) {
+            state.user = {
+                nameId: 'USR_' + Date.now(),
+                name: defaultName,
+                email: email,
+                exp: 50,
+                petVal: 70
+            };
+
+            closeAuthModal();
+            document.getElementById('login-banner').classList.add('hidden');
+            
+            document.getElementById('user-status-area').innerHTML = `
+                <div class="flex items-center gap-2 bg-white/70 px-3 py-1.5 rounded-full border border-watercolor-rose/30 shadow-sm">
+                    <div class="w-7 h-7 rounded-full bg-watercolor-rose flex items-center justify-center text-white text-xs font-bold">
+                        ${state.user.name.substring(0,1)}
+                    </div>
+                    <span class="text-xs font-medium text-watercolor-ink hidden sm:inline">${state.user.name}</span>
+                    <button onclick="logout()" class="text-xs text-gray-400 hover:text-rose-500 ml-1"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
+                </div>
+            `;
+
+            updatePetUI();
+            showToast(`成功使用 ${provider} 帳號登入！歡迎回到舒壓空間 ✿`);
+
+            if (state.gasUrl) {
+                fetch(state.gasUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'loginOrRegister',
+                        name: state.user.name,
+                        email: state.user.email
+                    })
+                });
+            }
+        }
+
+        function logout() {
+            state.user = null;
+            document.getElementById('login-banner').classList.remove('hidden');
+            document.getElementById('user-status-area').innerHTML = `
+                <button onclick="openAuthModal()" class="px-4 py-2 bg-watercolor-rose text-white text-sm font-medium rounded-full hover:bg-rose-400 transition-all shadow-md flex items-center gap-2">
+                    <i class="fa-brands fa-google"></i>
+                    <span>登入 / 註冊</span>
+                </button>
+            `;
+            showToast("已順利登出。");
+        }
+
+        // ================= SETTINGS & GAS CODE HELPERS =================
+        function saveGasUrl() {
+            const url = document.getElementById('gas-url-input').value.trim();
+            state.gasUrl = url;
+            localStorage.setItem('gas_app_url', url);
+            updateGasStatusIndicator(!!url);
+            showToast(url ? "Google Apps Script API 網址儲存成功！" : "已切換回本地 Demo 體驗模式");
+        }
+
+        function updateGasStatusIndicator(isConnected) {
+            const ind = document.getElementById('gas-status-indicator');
+            const txt = document.getElementById('gas-status-text');
+            if (isConnected) {
+                ind.className = "inline-block w-2.5 h-2.5 rounded-full bg-emerald-500";
+                txt.innerText = "目前運作狀態：實體 Google Sheets API 已連線";
+            } else {
+                ind.className = "inline-block w-2.5 h-2.5 rounded-full bg-amber-400";
+                txt.innerText = "目前運作狀態：本地展示模式 (Demo Mode)";
+            }
+        }
+
+        function copyGasCode() {
+            const codeArea = document.getElementById('gas-code-display');
+            codeArea.select();
+            document.execCommand('copy');
+            showToast("Code.gs 原始碼已複製至剪貼簿！");
+        }
+
+        // ================= UTILITIES =================
+        function showToast(msg) {
+            const toast = document.getElementById('toast-message');
+            document.getElementById('toast-text').innerText = msg;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
