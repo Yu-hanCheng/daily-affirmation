@@ -689,15 +689,35 @@ function updateUserStats(nameId, addExp, addPetVal) {
             }, 400);
         }
 
-        function prepareRandomCard() {
-            const random = state.affirmations[Math.floor(Math.random() * state.affirmations.length)];
+        async function prepareRandomCard() {
+            // 預設先讀取本地靜態備用資料
+            let random = state.affirmations[Math.floor(Math.random() * state.affirmations.length)];
+        
+            // 若設定了 gasUrl，嘗試從 Google Sheet 抓取遠端資料
+            if (state.gasUrl) {
+                try {
+                    const response = await fetch(`${state.gasUrl}?action=getRandomPositivity`);
+                    const data = await response.json();
+                    if (data.status === 'success' && data.positivity) {
+                        random = {
+                            id: data.positivity.posId,
+                            category: data.positivity.category,
+                            content: data.positivity.content
+                        };
+                    }
+                } catch (error) {
+                    console.warn("無法連接至 Google Sheet，改用本地靜態資料:", error);
+                }
+            }
+        
             state.currentCard = random;
-
+        
+            // 更新畫面顯示
             document.getElementById('card-category').innerText = random.category;
             document.getElementById('card-content').innerText = random.content;
             document.getElementById('card-date').innerText = new Date().toISOString().split('T')[0];
-
-            // Reset Hearts (Single Heart per button)
+        
+            // 重置評分愛心
             const hearts = document.getElementById('heart-rating').children;
             for (let h of hearts) {
                 const icon = h.querySelector('i');
@@ -719,7 +739,8 @@ function updateUserStats(nameId, addExp, addPetVal) {
             showToast(`感謝給予 ${rating} 顆愛心溫暖評分！`);
             addExpAndPetVal(5, 2);
 
-            if (state.gasUrl && state.user) {
+            if (state.gasUrl) {
+                const nameId = state.user ? state.user.nameId : 'USR_GUEST';
                 fetch(state.gasUrl, {
                     method: 'POST',
                     mode: 'no-cors',
