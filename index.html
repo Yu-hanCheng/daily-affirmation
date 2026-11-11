@@ -689,14 +689,65 @@ function updateUserStats(nameId, addExp, addPetVal) {
             }, 400);
         }
 
-        async function prepareRandomCard() {
-            // 預設先讀取本地靜態備用資料
-            let random = state.affirmations[Math.floor(Math.random() * state.affirmations.length)];
+        // ================= CARD DRAWING & FLIP LOGIC (優化版) =================
+
+        async function handleCardClick() {
+            const cardInner = document.getElementById('card-inner');
+            
+            if (!state.isCardFlipped) {
+                // 1. 先把卡片翻轉過去
+                cardInner.classList.add('rotate-y-180');
+                state.isCardFlipped = true;
+                confetti({ particleCount: 30, spread: 60, origin: { y: 0.6 } });
+                
+                // 2. 翻牌同時非同步讀取資料（若準備資料過程極快，就不會感覺到閃跳）
+                await prepareRandomCard();
         
-            // 若設定了 gasUrl，嘗試從 Google Sheet 抓取遠端資料
+                if (state.user) {
+                    addExpAndPetVal(2, 1);
+                }
+            }
+        }
+        
+        async function drawNewCard() {
+            const cardInner = document.getElementById('card-inner');
+            
+            // 1. 先翻回正面（遮住舊內容）
+            cardInner.classList.remove('rotate-y-180');
+            state.isCardFlipped = false;
+        
+            // 2. 等卡片翻回正面的 400ms 動畫期間，在背景靜默拉取新資料並替換
+            setTimeout(async () => {
+                await prepareRandomCard();
+                showToast("已為您抽換全新的心靈肯定句 ✿");
+            }, 400);
+        }
+        
+        async function prepareRandomCard() {
+            // 預先顯示載入狀態（避免舊資料閃現）
+            document.getElementById('card-category').innerText = "載入中...";
+            document.getElementById('card-content').innerText = "「正在為您尋找今日的溫柔力量...」";
+            
+            // 重置評分愛心
+            const hearts = document.getElementById('heart-rating').children;
+            for (let h of hearts) {
+                const icon = h.querySelector('i');
+                icon.className = "fa-heart fa-regular text-rose-300";
+            }
+        
+            let random = null;
+        
+            // 嘗試從 GAS 後端抓取
             if (state.gasUrl) {
                 try {
-                    const response = await fetch(`${state.gasUrl}?action=getRandomPositivity`);
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3秒逾時機制
+        
+                    const response = await fetch(`${state.gasUrl}?action=getRandomPositivity`, {
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+        
                     const data = await response.json();
                     if (data.status === 'success' && data.positivity) {
                         random = {
@@ -706,23 +757,21 @@ function updateUserStats(nameId, addExp, addPetVal) {
                         };
                     }
                 } catch (error) {
-                    console.warn("無法連接至 Google Sheet，改用本地靜態資料:", error);
+                    console.warn("GAS 載入逾時或失敗，自動降級使用本地備用資料:", error);
                 }
+            }
+        
+            // 若 API 失敗或無網址，自動降級使用備用靜態資料
+            if (!random) {
+                random = state.affirmations[Math.floor(Math.random() * state.affirmations.length)];
             }
         
             state.currentCard = random;
         
-            // 更新畫面顯示
+            // 確定拿到資料後，再將正確文字渲染上畫面
             document.getElementById('card-category').innerText = random.category;
             document.getElementById('card-content').innerText = random.content;
             document.getElementById('card-date').innerText = new Date().toISOString().split('T')[0];
-        
-            // 重置評分愛心
-            const hearts = document.getElementById('heart-rating').children;
-            for (let h of hearts) {
-                const icon = h.querySelector('i');
-                icon.className = "fa-heart fa-regular text-rose-300";
-            }
         }
 
         function rateCard(rating) {
