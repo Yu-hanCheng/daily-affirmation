@@ -631,10 +631,7 @@ function updateUserStats(nameId, addExp, addPetVal) {
         // ================= INITIALIZATION =================
         window.onload = function() {
             document.getElementById('gas-code-display').value = GAS_CODE_STRING;
-            if (state.gasUrl) {
-                document.getElementById('gas-url-input').value = state.gasUrl;
-                updateGasStatusIndicator(true);
-            }
+            updateGasStatusIndicator(true);
             renderJournals();
             prepareRandomCard();
         };
