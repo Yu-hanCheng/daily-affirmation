@@ -575,7 +575,7 @@
             });
         }
 
-        function handleGoogleCredentialResponse(response) {
+        async function handleGoogleCredentialResponse(response) {
             const responsePayload = parseJwt(response.credential);
 
             const googleEmail = responsePayload.email;       // 真實 Google 帳戶 Email
@@ -598,6 +598,7 @@
 
 						if (result.status === 'success') {
 							userData = result.user; // 取得後端嚴格把關後的完整資料與正確 nameId
+							state.user = userData;  // ✿ 務必在這裡將資料賦值給 state.user！
 							// 撈取該 nameId 對應的舊日誌
 							await fetchUserJournals();
 
