@@ -481,165 +481,9 @@
             isCardFlipped: false
         };
 
-        // ================= GOOGLE APPS SCRIPT (CODE.GS) SOURCE CODE =================
-        const GAS_CODE_STRING = `// ========================================================
-// 每日一句肯定自己 - Google Apps Script (Code.gs) 後端 API
-// ========================================================
-// 請填入您的 Google Sheet 試算表 ID (從網址列取得)
-const SPREADSHEET_ID = '1S5hgMJsg-80KwjIIdwX1arRvy3ITo44YuzJKWczYECk';
-
-function getDb() {
-    return SpreadsheetApp.openById(SPREADSHEET_ID);
-}
-
-// 處理 HTTP GET 請求
-function doGet(e) {
-    const action = e.parameter.action;
-    let result = { status: 'error', message: '無效的操作' };
-
-    try {
-        if (action === 'getUser') {
-            result = getUser(e.parameter.email);
-        } else if (action === 'getRandomPositivity') {
-            result = getRandomPositivity();
-        } else if (action === 'getJournals') {
-            result = getJournals(e.parameter.nameId);
-        }
-    } catch (err) {
-        result = { status: 'error', message: err.toString() };
-    }
-
-    return ContentService.createTextOutput(JSON.stringify(result))
-        .setMimeType(ContentService.MimeType.JSON);
-}
-
-// 處理 HTTP POST 請求 (CORS 友善)
-function doPost(e) {
-    let result = { status: 'error', message: '無效的操作' };
-    try {
-        const data = JSON.parse(e.postData.contents);
-        const action = data.action;
-
-        if (action === 'loginOrRegister') {
-            result = loginOrRegister(data.name, data.email);
-        } else if (action === 'addJournal') {
-            result = addJournal(data.nameId, data.content);
-        } else if (action === 'ratePositivity') {
-            result = ratePositivity(data.nameId, data.posId, data.rating);
-        } else if (action === 'updatePet') {
-            result = updatePet(data.nameId, data.exp, data.petVal);
-        }
-    } catch (err) {
-        result = { status: 'error', message: err.toString() };
-    }
-
-    return ContentService.createTextOutput(JSON.stringify(result))
-        .setMimeType(ContentService.MimeType.JSON);
-}
-
-// 1. 心靈旅人登入與自動註冊 (E心靈旅人名單)
-function loginOrRegister(name, email) {
-    const sheet = getDb().getSheetByName('E心靈旅人名單');
-    const data = sheet.getDataRange().getValues();
-    
-    for (let i = 1; i < data.length; i++) {
-        if (data[i][2] === email) { // google帳戶匹配
-            return {
-                status: 'success',
-                user: {
-                    nameId: data[i][0],
-                    name: data[i][1],
-                    email: data[i][2],
-                    exp: data[i][3],
-                    petVal: data[i][4]
-                }
-            };
-        }
-    }
-
-    // 查無則新增
-    const newNameId = 'USR_' + new Date().getTime();
-    const newUser = [newNameId, name, email, 0, 50]; // 初始 EXP 0, 愛心寶寶值 50
-    sheet.appendRow(newUser);
-    
-    return {
-        status: 'success',
-        user: { nameId: newNameId, name: name, email: email, exp: 0, petVal: 50 }
-    };
-}
-
-// 2. 獲取隨機肯定句 (E肯定句)
-function getRandomPositivity() {
-    const sheet = getDb().getSheetByName('E肯定句');
-    const data = sheet.getDataRange().getValues();
-    if (data.length <= 1) return { status: 'error', message: '無資料' };
-
-    const randomIndex = Math.floor(Math.random() * (data.length - 1)) + 1;
-    const row = data[randomIndex];
-    
-    // 增加抽取次數
-    sheet.getRange(randomIndex + 1, 4).setValue((row[3] || 0) + 1);
-
-    return {
-        status: 'success',
-        positivity: { posId: row[0], category: row[1], content: row[2], count: row[3] + 1, score: row[4] }
-    };
-}
-
-// 3. 新增心靈旅人日誌 (心靈旅人日誌 & 經驗值)
-function addJournal(nameId, content) {
-    const logSheet = getDb().getSheetByName('心靈旅人日誌');
-    const logId = 'LOG_' + new Date().getTime();
-    const dateStr = Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd HH:mm");
-    
-    logSheet.appendRow([logId, nameId, dateStr, content]);
-    updateUserStats(nameId, 10, 5);
-
-    return { status: 'success', logId: logId, date: dateStr };
-}
-
-// 4. 記錄評分 (R心靈旅人之肯定句)
-function ratePositivity(nameId, posId, rating) {
-    const rateSheet = getDb().getSheetByName('R心靈旅人之肯定句');
-    const dateStr = Utilities.formatDate(new Date(), "GMT+8", "yyyy-MM-dd");
-    rateSheet.appendRow([nameId, posId, dateStr, rating]);
-    updateUserStats(nameId, 5, 2);
-
-    return { status: 'success' };
-}
-
-// 5. 取得特定心靈旅人日誌
-function getJournals(nameId) {
-    const sheet = getDb().getSheetByName('心靈旅人日誌');
-    const data = sheet.getDataRange().getValues();
-    const list = [];
-    
-    for (let i = 1; i < data.length; i++) {
-        if (data[i][1] === nameId) {
-            list.push({ logId: data[i][0], nameId: data[i][1], date: data[i][2], content: data[i][3] });
-        }
-    }
-    return { status: 'success', journals: list.reverse() };
-}
-
-// 輔助函式：更新用戶數值
-function updateUserStats(nameId, addExp, addPetVal) {
-    const sheet = getDb().getSheetByName('E心靈旅人名單');
-    const data = sheet.getDataRange().getValues();
-    for (let i = 1; i < data.length; i++) {
-        if (data[i][0] === nameId) {
-            const currentExp = data[i][3] || 0;
-            const currentPet = data[i][4] || 50;
-            sheet.getRange(i + 1, 4).setValue(currentExp + addExp);
-            sheet.getRange(i + 1, 5).setValue(Math.min(100, currentPet + addPetVal));
-            break;
-        }
-    }
-}`;
 
         // ================= INITIALIZATION =================
         window.onload = async function() {
-            document.getElementById('gas-code-display').value = GAS_CODE_STRING;
 
             const cachedAffirmations = localStorage.getItem('cached_affirmations');
             if (cachedAffirmations) {
@@ -738,41 +582,62 @@ function updateUserStats(nameId, addExp, addPetVal) {
             const googleName = responsePayload.name;         // 真實 Google 姓名
             const googlePicture = responsePayload.picture;   // 真實 Google 頭像 URL
 
-            state.user = {
-                nameId: 'USR_' + Date.now(),
-                name: googleName,
-                email: googleEmail,
-                exp: 50,
-                petVal: 70
-            };
-
             closeAuthModal();
             document.getElementById('login-banner').classList.add('hidden');
 
-            document.getElementById('user-status-area').innerHTML = `
-                <div class="flex items-center gap-2 bg-white/70 px-3 py-1.5 rounded-full border border-watercolor-rose/30 shadow-sm">
-                    <img src="${googlePicture}" alt="頭像" class="w-7 h-7 rounded-full object-cover border border-watercolor-rose">
-                    <span class="text-xs font-medium text-watercolor-ink hidden sm:inline">${state.user.name}</span>
-                    <button onclick="logout()" class="text-xs text-gray-400 hover:text-rose-500 ml-1"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
-                </div>
-            `;
 
-            updatePetUI();
-            showToast(`歡迎回來，${state.user.name}！已成功連結 Google 帳戶 ✿`);
+			// 2. 透過 GET 或 POST 向 GAS 確認該 Email 是否已存在於試算表中，並取得正確的 nameId
+			let userData = null;
+			
+				if (state.gasUrl) {
+					try {
+						showToast("正在同步訓練家資料...");
+						const url = `${state.gasUrl}?action=loginOrRegister&name=${encodeURIComponent(googleName)}&email=${encodeURIComponent(googleEmail)}`;
+						const res = await fetch(url);
+						const result = await res.json();
 
-            if (state.gasUrl) {
-                fetch(state.gasUrl, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'loginOrRegister',
-                        name: state.user.name,
-                        email: state.user.email
-                    })
-                });
-            }
+						if (result.status === 'success') {
+							userData = result.user; // 取得後端嚴格把關後的完整資料與正確 nameId
+							// 撈取該 nameId 對應的舊日誌
+							await fetchUserJournals();
+
+							document.getElementById('user-status-area').innerHTML = `
+								<div class="flex items-center gap-2 bg-white/70 px-3 py-1.5 rounded-full border border-watercolor-rose/30 shadow-sm">
+									<img src="${googlePicture}" alt="頭像" class="w-7 h-7 rounded-full object-cover border border-watercolor-rose">
+									<span class="text-xs font-medium text-watercolor-ink hidden sm:inline">${state.user.name}</span>
+									<button onclick="logout()" class="text-xs text-gray-400 hover:text-rose-500 ml-1"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
+								</div>
+							`;
+
+							updatePetUI();
+							showToast(`歡迎回來，${state.user.name}！已成功連結 Google 帳戶 ✿`);
+						} else {
+							showToast("登入失敗：無法從雲端取得有效的訓練家身分。");
+							document.getElementById('login-banner').classList.remove('hidden');
+						}
+					} catch (e) {
+						console.warn("與後端連線失敗", e);
+						showToast("與 Google 試算表後端連線失敗，請檢查網路或 API 設定。");
+						document.getElementById('login-banner').classList.remove('hidden');
+					}
+				}
         }
+		
+		// 撈取專屬舊日誌函式
+		async function fetchUserJournals() {
+			if (!state.gasUrl || !state.user || !state.user.nameId) return;
+			try {
+				const url = `${state.gasUrl}?action=getJournals&nameId=${encodeURIComponent(state.user.nameId)}`;
+				const res = await fetch(url);
+				const data = await res.json();
+				if (data.status === 'success' && Array.isArray(data.journals)) {
+					state.journals = data.journals;
+					renderJournals();
+				}
+			} catch (e) {
+				console.warn("載入舊日誌失敗", e);
+			}
+		}
 
         function parseJwt(token) {
             var base64Url = token.split('.')[1];
