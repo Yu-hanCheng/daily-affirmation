@@ -442,14 +442,10 @@
                 <p class="text-xs text-watercolor-sage mt-1">使用您的 Google 帳號登入以儲存專屬紀錄</p>
             </div>
 
-            <div class="space-y-3 pt-2">
-                <button onclick="loginWithGoogle()" class="w-full py-3 px-4 bg-white border border-gray-300 rounded-xl font-medium text-gray-700 text-sm hover:bg-gray-50 transition shadow-sm flex items-center justify-center gap-3">
-                    <i class="fa-brands fa-google text-red-500 text-base"></i>
-                    <span>使用 Google 帳號登入</span>
-                </button>
-            </div>
+            <!-- ✿ 這裡改用官方的 Google 登入按鈕容器 -->
+			<div id="google-signin-btn-container" class="flex justify-center py-2"></div>
 
-            <p class="text-[10px] text-watercolor-sage">登入即表示您同意建立「E心靈旅人名單」資料檔案。</p>
+            <p class="text-[10px] text-watercolor-sage">登入即表示您同意建立「心靈旅人名單」資料檔案。</p>
             
             <button onclick="closeAuthModal()" class="text-xs text-gray-400 hover:text-gray-600 underline pt-2">暫時以訪客身份繼續</button>
         </div>
@@ -483,7 +479,16 @@
 
 
         // ================= INITIALIZATION =================
-        window.onload = async function() {
+        // 當網頁載入時，直接初始化 Google 登入服務
+        window.addEventListener('load', function() {
+            if (typeof google !== 'undefined') {
+                google.accounts.id.initialize({
+                    client_id: '989435194678-5ss4n5nqpssjdoqmal8qcpnh7tpbh6i5.apps.googleusercontent.com', 
+                    callback: handleGoogleCredentialResponse
+                });
+            }
+        });
+		window.onload = async function() {
 
             const cachedAffirmations = localStorage.getItem('cached_affirmations');
             if (cachedAffirmations) {
@@ -862,6 +867,13 @@
                 modal.classList.remove('opacity-0');
                 modal.children[0].classList.remove('scale-95');
             }, 10);
+			// ✿ 自動將官方 Google 登入按鈕渲染在指定容器中，完美繞過 FedCM 攔截錯誤
+            if (typeof google !== 'undefined') {
+                google.accounts.id.renderButton(
+                    document.getElementById('google-signin-btn-container'),
+                    { theme: 'outline', size: 'large', width: '280', text: 'continue_with', locale: 'zh-TW' }
+                );
+            }
         }
 
         function closeAuthModal() {
