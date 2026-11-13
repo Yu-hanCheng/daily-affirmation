@@ -212,7 +212,7 @@
         </div>
 
         <!-- ================= PAGE 1: DRAW AFFIRMATION CARD ================= -->
-        <section id="page-draw" class="space-y-6">
+        <section id="page-draw" class="space-y-4">
             <!-- Header Tip -->
             <div class="text-center space-y-2">
                 <span class="text-xs font-semibold px-3 py-1 rounded-full bg-watercolor-rose/30 text-rose-700 tracking-wider">今日肯定旅程</span>
@@ -221,7 +221,7 @@
             </div>
 
             <!-- Card Flip Area -->
-            <div class="perspective-1000 w-full max-w-md mx-auto h-[380px] cursor-pointer" onclick="handleCardClick()">
+			<div class="perspective-1000 w-full max-w-md mx-auto h-[280px] sm:h-[350px] cursor-pointer" onclick="handleCardClick()">
                 <div id="card-inner" class="transform-style-3d relative w-full h-full duration-700">
                     
                     <!-- Card Front (Unrevealed) -->
@@ -265,14 +265,14 @@
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex flex-wrap justify-center gap-4 pt-4">
-                <button onclick="drawNewCard()" class="px-6 py-2.5 rounded-full bg-watercolor-sage text-white text-sm font-medium hover:bg-teal-700 transition shadow-md flex items-center gap-2">
-                    <i class="fa-solid fa-rotate-right"></i> 重新抽取肯定句
-                </button>
-                <button onclick="switchTab('journal')" class="px-6 py-2.5 rounded-full bg-white text-watercolor-ink border border-watercolor-rose/40 text-sm font-medium hover:bg-watercolor-pink/40 transition shadow-sm flex items-center gap-2">
-                    <i class="fa-solid fa-pen-nib text-rose-400"></i> 將此感受寫入日誌
-                </button>
-            </div>
+			<div class="flex flex-row flex-nowrap justify-center items-center gap-2 mt-3 px-2">
+				<button onclick="drawNewCard()" class="px-3.5 py-2 rounded-full bg-watercolor-sage text-white text-xs font-medium hover:bg-teal-700 transition shadow-md flex items-center gap-1.5 whitespace-nowrap">
+					<i class="fa-solid fa-rotate-right text-[10px]"></i> 重新抽取肯定句
+				</button>
+				<button onclick="switchTab('journal')" class="px-3.5 py-2 rounded-full bg-white text-watercolor-ink border border-watercolor-rose/40 text-xs font-medium hover:bg-watercolor-pink/40 transition shadow-sm flex items-center gap-1.5 whitespace-nowrap">
+					<i class="fa-solid fa-pen-nib text-rose-400 text-[10px]"></i> 將此感受寫入日誌
+				</button>
+			</div>
         </section>
 
         <!-- ================= PAGE 2: TRAINER JOURNAL ================= -->
@@ -313,7 +313,7 @@
             <div class="space-y-2">
                 <span class="text-xs font-semibold px-3 py-1 rounded-full bg-watercolor-pink text-pink-700 tracking-wider">靈魂伴侶</span>
                 <h2 class="font-serif text-2xl font-bold text-watercolor-ink">愛心寶寶狀態與心靈旅人等級</h2>
-                <p class="text-sm text-watercolor-sage">透過抽牌與日誌給予愛心寶寶養分，觀察牠的成長吧！</p>
+                <p class="text-sm text-watercolor-sage">透過抽牌與日誌給予愛心寶寶養分，觀察她的成長吧！</p>
             </div>
 
             <div class="watercolor-card p-8 max-w-lg mx-auto space-y-6">
@@ -360,10 +360,10 @@
                     <div class="space-y-1">
                         <div class="flex justify-between text-xs font-medium text-watercolor-ink">
                             <span><i class="fa-solid fa-heart text-rose-400 mr-1"></i>愛心寶寶親密度</span>
-                            <span id="pet-val-text">65 / 100</span>
+                            <span id="pet-val-text">10/ 100</span>
                         </div>
                         <div class="w-full h-3 bg-gray-200/60 rounded-full overflow-hidden p-0.5">
-                            <div id="pet-val-bar" class="h-full bg-gradient-to-r from-rose-300 to-rose-500 rounded-full transition-all duration-500" style="width: 65%"></div>
+                            <div id="pet-val-bar" class="h-full bg-gradient-to-r from-rose-300 to-rose-500 rounded-full transition-all duration-500" style="width: 10%"></div>
                         </div>
                     </div>
                 </div>
@@ -448,6 +448,7 @@
             }
 
             renderJournals();
+			updatePetUI(); // ✿ 加上這行：讓網頁一打開，愛心寶寶立刻就是小小的！
             await fetchAllAffirmationsFromGAS();
         };
 
@@ -738,9 +739,6 @@
         }
 
         function addExpAndPetVal(expAdd, petValAdd) {
-            if (!state.user) {
-                state.user = { nameId: 'USR_DEMO', name: '訪客暖心夥伴', email: 'guest@example.com', exp: 35, petVal: 60 };
-            }
 
             state.user.exp += expAdd;
             state.user.petVal = Math.min(100, state.user.petVal + petValAdd);
@@ -749,7 +747,9 @@
         }
 
         function updatePetUI() {
-            if (!state.user) return;
+            if (!state.user) {
+                state.user = { nameId: 'USR_DEMO', name: '訪客暖心夥伴', email: 'guest@example.com', exp: 10, petVal: 10 };
+            }
 
             const exp = state.user.exp;
             const petVal = state.user.petVal;
@@ -767,7 +767,7 @@
             document.getElementById('pet-val-bar').style.width = `${petVal}%`;
 
             // ✿ 讓愛心寶寶根據親密度從小長大 (比例從 0.7 成長到 1.3)
-            const scaleFactor = 0.7 + (petVal / 100) * 0.6;
+            const scaleFactor = 0.4 + (petVal / 100) * 0.9;
             const svg = document.getElementById('pet-svg');
             svg.style.transform = `scale(${scaleFactor.toFixed(2)})`;
         }
