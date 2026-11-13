@@ -766,12 +766,10 @@
             document.getElementById('pet-val-text').innerText = `${petVal} / 100`;
             document.getElementById('pet-val-bar').style.width = `${petVal}%`;
 
+            // ✿ 讓愛心寶寶根據親密度從小長大 (比例從 0.7 成長到 1.3)
+            const scaleFactor = 0.7 + (petVal / 100) * 0.6;
             const svg = document.getElementById('pet-svg');
-            if (petVal > 80) {
-                svg.style.transform = "scale(1.1)";
-            } else {
-                svg.style.transform = "scale(1)";
-            }
+            svg.style.transform = `scale(${scaleFactor.toFixed(2)})`;
         }
 
         // ================= AUTHENTICATION MODAL LOGIC =================
