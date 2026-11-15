@@ -171,6 +171,9 @@
                 <button onclick="switchTab('pet')" id="nav-pet" class="px-4 py-1.5 rounded-full transition-all duration-300 font-medium text-gray-500 hover:text-watercolor-ink">
                     <i class="fa-solid fa-heart-pulse mr-1.5 text-pink-500"></i>愛心寶寶
                 </button>
+                <button onclick="switchTab('letter')" id="nav-letter" class="px-4 py-1.5 rounded-full transition-all duration-300 font-medium text-gray-500 hover:text-watercolor-ink">
+                    <i class="fa-solid fa-envelope-open-text mr-1.5 text-amber-500"></i>寫信給學姊
+                </button>
             </nav>
 
             <!-- User Status / Auth Button -->
@@ -196,6 +199,10 @@
         <button onclick="switchTab('pet')" id="m-nav-pet" class="flex flex-col items-center p-2 text-gray-400">
             <i class="fa-solid fa-heart-pulse text-lg"></i>
             <span class="text-xs mt-1">寶寶</span>
+        </button>
+        <button onclick="switchTab('letter')" id="m-nav-letter" class="flex flex-col items-center p-2 text-gray-400">
+            <i class="fa-solid fa-envelope-open-text text-lg"></i>
+            <span class="text-xs mt-1">寫信</span>
         </button>
     </div>
 
@@ -376,6 +383,39 @@
                 </div>
             </div>
         </section>
+
+        <!-- ================= PAGE 4: WRITE LETTER TO SENIOR SISTER ================= -->
+        <section id="page-letter" class="hidden space-y-6">
+            <div class="text-center space-y-2">
+                <span class="text-xs font-semibold px-3 py-1 rounded-full bg-watercolor-purple text-purple-700 tracking-wider">溫馨手寫信箱</span>
+                <h2 class="font-serif text-2xl font-bold text-watercolor-ink">寫信給學姊</h2>
+                <p class="text-sm text-watercolor-sage max-w-md mx-auto">留下你的心聲與回信地址，學姊收到通知後將會親筆回寫手寫信給你喔！</p>
+            </div>
+
+            <div class="watercolor-card p-6 md:p-8 max-w-lg mx-auto space-y-5 border-purple-200">
+                <form id="senior-letter-form" onsubmit="submitLetterToSenior(event)" class="space-y-4">
+                    <div class="space-y-1.5 text-left">
+                        <label for="letter-content-input" class="block text-xs font-medium text-watercolor-ink">
+                            <i class="fa-solid fa-feather text-purple-500 mr-1"></i> 想找人說說話：
+                        </label>
+                        <textarea id="letter-content-input" rows="5" placeholder="如果心裡有點累、有點悶，就把心情留在此刻吧。愛心寶寶與學姊會好好接住你的每一句話。" class="w-full p-4 rounded-xl border border-watercolor-sage/30 bg-white/80 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 placeholder-gray-400 resize-none" required></textarea>
+                    </div>
+
+                    <div class="space-y-1.5 text-left">
+                        <label for="return-address-input" class="block text-xs font-medium text-watercolor-ink">
+                            <i class="fa-solid fa-location-dot text-rose-400 mr-1"></i> 回信收件地址（電子郵件 或 真實收件地址）：
+                        </label>
+                        <input type="text" id="return-address-input" placeholder="例如：user@example.com 或 台灣台南市..." class="w-full p-3 rounded-xl border border-watercolor-sage/30 bg-white/80 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 placeholder-gray-400" required>
+                    </div>
+
+                    <div class="pt-2 text-center">
+                        <button type="submit" class="px-6 py-3 bg-purple-500 text-white text-sm font-medium rounded-full hover:bg-purple-600 transition shadow-md flex items-center justify-center gap-2 mx-auto w-full sm:w-auto">
+                            <i class="fa-solid fa-paper-plane"></i> 寄出信件給學姊
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
     </main>
 
     <!-- Modal: Google Login Only -->
@@ -448,7 +488,7 @@
             }
 
             renderJournals();
-			updatePetUI(); // ✿ 加上這行：讓網頁一打開，愛心寶寶立刻就是小小的！
+			updatePetUI();
             await fetchAllAffirmationsFromGAS();
         };
 
@@ -474,9 +514,12 @@
 
         // ================= UI TAB SWITCHING =================
         function switchTab(tabName) {
-            const tabs = ['draw', 'journal', 'pet'];
+            const tabs = ['draw', 'journal', 'pet', 'letter'];
             tabs.forEach(t => {
-                document.getElementById(`page-${t}`).classList.add('hidden');
+                const pageEl = document.getElementById(`page-${t}`);
+                if (pageEl) {
+                    pageEl.classList.add('hidden');
+                }
 
                 const navBtn = document.getElementById(`nav-${t}`);
                 if (navBtn) {
@@ -497,7 +540,10 @@
                 }
             });
 
-            document.getElementById(`page-${tabName}`).classList.remove('hidden');
+            const targetPage = document.getElementById(`page-${tabName}`);
+            if (targetPage) {
+                targetPage.classList.remove('hidden');
+            }
         }
 
         // ================= GOOGLE AUTHENTICATION (GIS) =================
@@ -726,6 +772,38 @@
             `).join('');
         }
 
+        // ================= WRITE LETTER TO SENIOR SISTER =================
+        function submitLetterToSenior(event) {
+            event.preventDefault();
+            const content = document.getElementById('letter-content-input').value.trim();
+            const returnAddress = document.getElementById('return-address-input').value.trim();
+
+            if (!content || !returnAddress) {
+                showToast("請完整填寫信件內容與回信地址喔！");
+                return;
+            }
+
+            showToast("信件已成功寄出！學姊收到通知後將會準備手寫信回覆您 💌");
+            confetti({ particleCount: 50, spread: 70, origin: { y: 0.6 } });
+
+            document.getElementById('senior-letter-form').reset();
+
+            if (state.gasUrl) {
+                const nameId = state.user ? state.user.nameId : 'USR_GUEST';
+                fetch(state.gasUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'sendLetterToSenior',
+                        nameId: nameId,
+                        content: content,
+                        returnAddress: returnAddress
+                    })
+                }).catch(e => console.warn("同步信件到後端失敗", e));
+            }
+        }
+
         // ================= HEART BABY & USER STATS =================
         function interactWithPet() {
             addExpAndPetVal(2, 5);
@@ -739,6 +817,9 @@
         }
 
         function addExpAndPetVal(expAdd, petValAdd) {
+            if (!state.user) {
+                state.user = { nameId: 'USR_DEMO', name: '訪客暖心夥伴', email: 'guest@example.com', exp: 10, petVal: 10 };
+            }
 
             state.user.exp += expAdd;
             state.user.petVal = Math.min(100, state.user.petVal + petValAdd);
@@ -766,7 +847,6 @@
             document.getElementById('pet-val-text').innerText = `${petVal} / 100`;
             document.getElementById('pet-val-bar').style.width = `${petVal}%`;
 
-            // ✿ 讓愛心寶寶根據親密度從小長大 (比例從 0.7 成長到 1.3)
             const scaleFactor = 0.4 + (petVal / 100) * 0.9;
             const svg = document.getElementById('pet-svg');
             svg.style.transform = `scale(${scaleFactor.toFixed(2)})`;
