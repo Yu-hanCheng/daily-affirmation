@@ -416,17 +416,49 @@
 
     <!-- JavaScript Application Logic -->
     <script>
+	<script>
+        const DEFAULT_DEMO_JOURNALS = [
+            { id: 'LOG_1', date: '2026-11-10 14:30', content: '今天在工作之餘抽空喝了一杯熱茶，感覺心境漸漸平靜下來。' },
+            { id: 'LOG_2', date: '2026-11-09 20:15', content: '雖然事情有點多，但我允許自己照自己的步調完成。' }
+        ];
+
         const state = {
             user: null,
             currentCard: null,
-            journals: [
-                { id: 'LOG_1', date: '2026-11-10 14:30', content: '今天在工作之餘抽空喝了一杯熱茶，感覺心境漸漸平靜下來。' },
-                { id: 'LOG_2', date: '2026-11-09 20:15', content: '雖然事情有點多，但我允許自己照自己的步調完成。' }
-            ],
+            journals: [],
             affirmations: [],
             gasUrl: 'https://script.google.com/macros/s/AKfycbybosNwJSXHZDirP_HhotfrVSi1v0PU9dZyhMxPk3MGqksrlr05L069vbvq_n4hJohunA/exec',
             isCardFlipped: false
         };
+
+        // 判斷是否為訪客模式
+        function isDemoUser() {
+            return !state.user || state.user.nameId === 'USR_DEMO';
+        }
+
+        // 載入訪客本地暫存資料
+        function loadDemoUserData() {
+            const savedExp = localStorage.getItem('demo_exp');
+            const savedPetVal = localStorage.getItem('demo_petVal');
+            state.user = {
+                nameId: 'USR_DEMO',
+                name: '訪客暖心夥伴',
+                email: 'guest@example.com',
+                exp: savedExp !== null ? Number(savedExp) : 20,
+                petVal: savedPetVal !== null ? Number(savedPetVal) : 10
+            };
+
+            const savedJournals = localStorage.getItem('demo_journals');
+            if (savedJournals) {
+                try {
+                    state.journals = JSON.parse(savedJournals);
+                } catch (e) {
+                    state.journals = [...DEFAULT_DEMO_JOURNALS];
+                }
+            } else {
+                state.journals = [...DEFAULT_DEMO_JOURNALS];
+            }
+        }
 
         window.addEventListener('load', function() {
             if (typeof google !== 'undefined') {
@@ -450,8 +482,10 @@
                 }
             }
 
+            // 預設以訪客模式載入 localStorage 資料
+            loadDemoUserData();
             renderJournals();
-			updatePetUI();
+            updatePetUI();
             await fetchAllAffirmationsFromGAS();
         };
 
@@ -476,33 +510,25 @@
             const tabs = ['draw', 'journal', 'pet', 'letter'];
             tabs.forEach(t => {
                 const pageEl = document.getElementById(`page-${t}`);
-                if (pageEl) {
-                    pageEl.classList.add('hidden');
-                }
+                if (pageEl) pageEl.classList.add('hidden');
 
                 const navBtn = document.getElementById(`nav-${t}`);
                 if (navBtn) {
-                    if (t === tabName) {
-                        navBtn.className = "px-4 py-1.5 rounded-full transition-all duration-300 font-medium text-watercolor-ink bg-watercolor-rose/30 shadow-sm";
-                    } else {
-                        navBtn.className = "px-4 py-1.5 rounded-full transition-all duration-300 font-medium text-gray-500 hover:text-watercolor-ink";
-                    }
+                    navBtn.className = (t === tabName)
+                        ? "px-4 py-1.5 rounded-full transition-all duration-300 font-medium text-watercolor-ink bg-watercolor-rose/30 shadow-sm"
+                        : "px-4 py-1.5 rounded-full transition-all duration-300 font-medium text-gray-500 hover:text-watercolor-ink";
                 }
 
                 const mNavBtn = document.getElementById(`m-nav-${t}`);
                 if (mNavBtn) {
-                    if (t === tabName) {
-                        mNavBtn.className = "flex flex-col items-center p-2 text-rose-500";
-                    } else {
-                        mNavBtn.className = "flex flex-col items-center p-2 text-gray-400";
-                    }
+                    mNavBtn.className = (t === tabName)
+                        ? "flex flex-col items-center p-2 text-rose-500"
+                        : "flex flex-col items-center p-2 text-gray-400";
                 }
             });
 
             const targetPage = document.getElementById(`page-${tabName}`);
-            if (targetPage) {
-                targetPage.classList.remove('hidden');
-            }
+            if (targetPage) targetPage.classList.remove('hidden');
         }
 
         async function handleGoogleCredentialResponse(response) {
@@ -548,13 +574,22 @@
         }
 
         async function fetchUserJournals() {
-            if (!state.gasUrl || !state.user || !state.user.nameId) return;
+            if (isDemoUser()) {
+                loadDemoUserData();
+                renderJournals();
+                return;
+            }
+            if (!state.gasUrl) return;
             try {
                 const url = `${state.gasUrl}?action=getJournals&nameId=${encodeURIComponent(state.user.nameId)}`;
                 const res = await fetch(url);
                 const data = await res.json();
                 if (data.status === 'success' && Array.isArray(data.journals)) {
-                    state.journals = data.journals;
+                    state.journals = data.journals.map(j => ({
+                        id: j.logId || j.id,
+                        date: j.date,
+                        content: j.content
+                    }));
                     renderJournals();
                 }
             } catch (e) {
@@ -586,9 +621,7 @@
                         body: JSON.stringify({ action: 'incrementCount', posId: state.currentCard.posId })
                     });
                 }
-                if (state.user) {
-                    addExpAndPetVal(2, 1);
-                }
+                addExpAndPetVal(2, 1);
             }
         }
 
@@ -644,13 +677,18 @@
             showToast(`感謝給予 ${rating} 顆愛心溫暖評分！`);
             addExpAndPetVal(5, 2);
 
-            if (state.gasUrl && state.currentCard) {
-                const nameId = state.user ? state.user.nameId : 'USR_GUEST';
+            // 只有正式登入會員才寫入評分紀錄表
+            if (!isDemoUser() && state.gasUrl && state.currentCard) {
                 fetch(state.gasUrl, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'ratePositivity', nameId: nameId, posId: state.currentCard.posId, rating: rating })
+                    body: JSON.stringify({
+                        action: 'ratePositivity',
+                        nameId: state.user.nameId,
+                        posId: state.currentCard.posId,
+                        rating: rating
+                    })
                 });
             }
         }
@@ -696,7 +734,6 @@
             `).join('');
         }
 
-        // 💡 新增：將目前抽到的肯定句帶入日誌輸入框，再切換至日誌頁面
         function writeCurrentCardToJournal() {
             const journalInput = document.getElementById('journal-input');
             const cardContent = state.currentCard && state.currentCard.content
@@ -789,32 +826,41 @@
 
         function saveJournalLog() {
             const input = document.getElementById('journal-input');
-            const text = input.value.trim();
-            if (!text) {
-                showToast("請輸入欲記錄的心意再儲存喔！");
-                return;
-            }
+            const content = input.value.trim();
+            if (!content) return;
 
             const now = new Date();
             const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-            const newLog = { id: 'LOG_' + Date.now(), date: dateStr, content: text };
+            const newLog = { id: 'LOG_' + Date.now(), date: dateStr, content: content };
             state.journals.unshift(newLog);
             renderJournals();
             input.value = '';
             document.getElementById('journal-word-count').innerText = '0 字';
 
+            // 同步更新 EXP 與愛心寶寶值（內部會自動區分訪客存 localStorage 或正式會員同步後端）
             addExpAndPetVal(5, 2);
-            showToast("日誌儲存成功！心靈旅人 EXP +5 ✿");
             confetti({ particleCount: 40, spread: 50, origin: { y: 0.7 } });
 
-            if (state.gasUrl && state.user) {
-                fetch(state.gasUrl, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'addJournal', nameId: state.user.nameId, content: text })
-                });
+            if (isDemoUser()) {
+                // 💡 訪客模式：日誌僅存於瀏覽器 localStorage
+                localStorage.setItem('demo_journals', JSON.stringify(state.journals));
+                showToast("日誌已暫存於瀏覽器！心靈旅人 EXP +5 ✿");
+            } else {
+                // 💡 正式會員：同步寫入 Google 試算表
+                showToast("日誌儲存成功！心靈旅人 EXP +5 ✿");
+                if (state.gasUrl) {
+                    fetch(state.gasUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'addJournal',
+                            nameId: state.user.nameId,
+                            content: content
+                        })
+                    });
+                }
             }
         }
 
@@ -884,7 +930,7 @@
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ 
                         action: 'sendLetterToSenior', 
-                        nameId: state.user ? state.user.nameId : 'USR_GUEST', 
+                        nameId: state.user ? state.user.nameId : 'USR_DEMO', 
                         content: content, 
                         returnAddress: returnAddress, 
                         realName: realName, 
@@ -916,18 +962,38 @@
             confetti({ particleCount: 20, scalar: 0.8, origin: { y: 0.5 } });
         }
 
+        // 💡 統一處理經驗值與愛心寶寶親密度的更新與持久化儲存
         function addExpAndPetVal(expAdd, petValAdd) {
             if (!state.user) {
-                state.user = { nameId: 'USR_DEMO', name: '訪客暖心夥伴', email: 'guest@example.com', exp: 0, petVal: 0 };
+                loadDemoUserData();
             }
-            state.user.exp += expAdd;
-            state.user.petVal = Math.min(100, state.user.petVal + petValAdd);
+            state.user.exp = (Number(state.user.exp) || 0) + expAdd;
+            state.user.petVal = Math.min(100, (Number(state.user.petVal) || 0) + petValAdd);
             updatePetUI();
+
+            if (isDemoUser()) {
+                // 訪客：存在瀏覽器 localStorage
+                localStorage.setItem('demo_exp', state.user.exp);
+                localStorage.setItem('demo_petVal', state.user.petVal);
+            } else if (state.gasUrl) {
+                // 正式會員：同步寫回 E訓練家名單
+                fetch(state.gasUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'updatePet',
+                        nameId: state.user.nameId,
+                        exp: state.user.exp,
+                        petVal: state.user.petVal
+                    })
+                });
+            }
         }
 
         function updatePetUI() {
             if (!state.user) {
-                state.user = { nameId: 'USR_DEMO', name: '訪客暖心夥伴', email: 'guest@example.com', exp: 20, petVal: 10 };
+                loadDemoUserData();
             }
             const exp = state.user.exp;
             const petVal = state.user.petVal;
@@ -972,7 +1038,9 @@
         }
 
         function logout() {
-            state.user = null;
+            loadDemoUserData();
+            renderJournals();
+            updatePetUI();
             document.getElementById('login-banner').classList.remove('hidden');
             document.getElementById('user-status-area').innerHTML = `
                 <button onclick="openAuthModal()" class="px-4 py-2 bg-watercolor-rose text-white text-sm font-medium rounded-full hover:bg-rose-400 transition-all shadow-md flex items-center gap-2">
@@ -980,7 +1048,7 @@
                     <span>登入 / 註冊</span>
                 </button>
             `;
-            showToast("已順利登出。");
+            showToast("已順利登出，切換回訪客模式。");
         }
 
         function showToast(msg) {
@@ -1007,5 +1075,6 @@
                 .replace(/'/g, "&#039;");
         }
     </script>
+ </script>
 </body>
 </html>
