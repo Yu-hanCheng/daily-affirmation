@@ -674,7 +674,7 @@
             }
 
             showToast(`感謝給予 ${rating} 顆愛心溫暖評分！`);
-            addExpAndPetVal(5, 2);
+            addExpAndPetVal(0, 2);
 
             // 只有正式登入會員才寫入評分紀錄表
             if (!isDemoUser() && state.gasUrl && state.currentCard) {
@@ -950,6 +950,7 @@
                 console.error("寄信連線錯誤:", e);
                 showToast("與後端連線失敗，請檢查網路或 GAS 部署狀態。");
             }
+			addExpAndPetVal(5, 2);
         }
 
         function interactWithPet() {
