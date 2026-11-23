@@ -113,7 +113,7 @@
                 <button onclick="switchTab('pet')" id="nav-pet" class="px-4 py-1.5 rounded-full transition-all duration-300 font-medium text-gray-500 hover:text-watercolor-ink">
                     <i class="fa-solid fa-heart-pulse mr-1.5 text-pink-500"></i>愛心寶寶
                 </button>
-                <button onclick="switchTab('letter')" id="nav-letter" class="px-4 py-1.5 rounded-full transition-all duration-300 font-medium text-gray-500 hover:text-watercolor-ink">
+                <button onclick="switchTab('letter')" id="nav-letter" class="hidden px-4 py-1.5 rounded-full transition-all duration-300 font-medium text-gray-500 hover:text-watercolor-ink">
                     <i class="fa-solid fa-envelope-open-text mr-1.5 text-amber-500"></i>寫信給學姊
                 </button>
             </nav>
@@ -140,7 +140,7 @@
             <i class="fa-solid fa-heart-pulse text-lg"></i>
             <span class="text-xs mt-1">寶寶</span>
         </button>
-        <button onclick="switchTab('letter')" id="m-nav-letter" class="flex flex-col items-center p-2 text-gray-400">
+        <button onclick="switchTab('letter')" id="m-nav-letter" class="hidden flex flex-col items-center p-2 text-gray-400">
             <i class="fa-solid fa-envelope-open-text text-lg"></i>
             <span class="text-xs mt-1">寫信</span>
         </button>
@@ -484,6 +484,7 @@
             // 預設以訪客模式載入 localStorage 資料
             loadDemoUserData();
             renderJournals();
+			updateAuthUI();
             updatePetUI();
             await fetchAllAffirmationsFromGAS();
         };
@@ -504,8 +505,30 @@
                 console.warn("背景同步肯定句失敗，持續使用本地資料:", error);
             }
         }
-
+		// 依登入狀態顯示或隱藏「寫信給學姊」入口與頁面
+		function updateAuthUI() {
+		    const loggedIn = !isDemoUser();
+		    const navLetter = document.getElementById('nav-letter');
+		    const mNavLetter = document.getElementById('m-nav-letter');
+		    const pageLetter = document.getElementById('page-letter');
+		
+		    if (navLetter) {
+		        navLetter.classList.toggle('hidden', !loggedIn);
+		    }
+		    if (mNavLetter) {
+		        mNavLetter.classList.toggle('hidden', !loggedIn);
+		        mNavLetter.classList.toggle('flex', loggedIn);
+		    }
+		    if (!loggedIn && pageLetter && !pageLetter.classList.contains('hidden')) {
+		        switchTab('draw');
+		    }
+		}
         function switchTab(tabName) {
+			if (tabName === 'letter' && isDemoUser()) {
+		        showToast("請先登入 Google 帳號，才能使用「寫信給學姊」功能喔！");
+		        openAuthModal();
+		        return;
+		    }
             const tabs = ['draw', 'journal', 'pet', 'letter'];
             tabs.forEach(t => {
                 const pageEl = document.getElementById(`page-${t}`);
@@ -557,7 +580,7 @@
                                 <button onclick="logout()" class="text-xs text-gray-400 hover:text-rose-500 ml-1"><i class="fa-solid fa-arrow-right-from-bracket"></i></button>
                             </div>
                         `;
-
+						updateAuthUI();
                         updatePetUI();
                         showToast(`歡迎回來，${state.user.name}！已成功連結 Google 帳戶 ✿`);
                     } else {
@@ -940,7 +963,8 @@
                 const result = await response.json();
 
                 if (result.status === 'success') {
-                    showToast("信件已成功寄出！學姊收到通知後將會準備手寫信回覆您 💌");
+					addExpAndPetVal(5, 2);
+                    showToast("信件已成功寄出！學姊收到通知後將會準備手寫信回覆您 💌(+5 EXP)");
                     confetti({ particleCount: 50, spread: 70, origin: { y: 0.6 } });
                     document.getElementById('senior-letter-form').reset();
                 } else {
@@ -1040,6 +1064,7 @@
         function logout() {
             loadDemoUserData();
             renderJournals();
+			updateAuthUI();
             updatePetUI();
             document.getElementById('login-banner').classList.remove('hidden');
             document.getElementById('user-status-area').innerHTML = `
